@@ -1,4 +1,4 @@
-package com.spring.rest;
+package com.spring.rest.bean;
 
 public class HelloWorldBean {
 

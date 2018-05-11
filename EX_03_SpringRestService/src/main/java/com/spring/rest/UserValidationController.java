@@ -17,6 +17,7 @@ public class UserValidationController {
 	@Autowired
 	private UserDaoService userDao;
 	
+	//http://localhost:8080/addUserWithValidation
 	@PostMapping("/addUserWithValidation")
 	public void createUser(@Valid @RequestBody User user) {
 		userDao.add(user);
