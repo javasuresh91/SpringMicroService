@@ -1,0 +1,1 @@
+insert into exchange_value_entity (id,currency_from,currency_to,conversion_multiple) values(1001,'USD','IND',65)
