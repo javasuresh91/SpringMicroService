@@ -20,8 +20,13 @@ public class ExchangeValueEntity {
 	private String to;
 
 	private BigDecimal conversionMultiple;
+
 	@Transient
 	private int port;
+	
+	protected ExchangeValueEntity() {
+		super();
+	}
 
 	/**
 	 * @param id
