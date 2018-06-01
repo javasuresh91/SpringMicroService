@@ -20,6 +20,12 @@ public class CurrencyConversionController {
 	@Autowired
 	Environment env;
 
+	@Autowired
+	private CurrenecyExchangeServiceProxy proxy;
+	
+	@Autowired
+	private CurrenecyExchangeServiceProxyRibbon proxyRibbon;
+
 	/**
 	 * http://localhost:8100/curr-convertor/from/USD/to/INR/quantity/1000 static
 	 * response
@@ -39,6 +45,7 @@ public class CurrencyConversionController {
 
 	/**
 	 * http://localhost:8100/curr-convertor-two/from/USD/to/INR/quantity/1000
+	 * Dynamic Response
 	 * 
 	 * @param from
 	 * @param to
@@ -63,6 +70,46 @@ public class CurrencyConversionController {
 		 * getBody() is used to get the response from the above Service Call
 		 */
 		ConvertionValue response = responseEntity.getBody();
+		System.out.println("Values From the Micro Serivce : " + response.toString());
+		return new ConvertionValue(response.getId(), from, to, response.getConversionMultiple(), qa,
+				qa.multiply(response.getConversionMultiple()), response.getPort());
+	}
+
+	/**
+	 * http://localhost:8100/curr-convertor-feign/from/USD/to/INR/quantity/1000
+	 * Dynamic Response Using feign
+	 * @param from
+	 * @param to
+	 * @param qa
+	 * @return
+	 */
+
+	@GetMapping("curr-convertor-feign/from/{from}/to/{to}/quantity/{qa}")
+	public ConvertionValue convertCurrencyThree(@PathVariable String from, @PathVariable String to,
+			@PathVariable BigDecimal qa) {
+
+		ConvertionValue response = proxy.retriveExchangeValueTwo(from, to);
+		System.out.println("Values From the Micro Serivce : " + response.toString());
+		return new ConvertionValue(response.getId(), from, to, response.getConversionMultiple(), qa,
+				qa.multiply(response.getConversionMultiple()), response.getPort());
+	}
+
+	/**
+	 * Dynamic Response using Ribbon(Naming Server)
+	 * http://localhost:8100/curr-convertor-ribbon/from/USD/to/INR/quantity/100000
+	 * @param from
+	 * @param to
+	 * @param qa
+	 * @return
+	 */
+	/**
+	 * 
+	 */
+	@GetMapping("curr-convertor-ribbon/from/{from}/to/{to}/quantity/{qa}")
+	public ConvertionValue convertCurrencyFour(@PathVariable String from, @PathVariable String to,
+			@PathVariable BigDecimal qa) {
+
+		ConvertionValue response = proxyRibbon.retriveExchangeValueTwo(from, to);
 		System.out.println("Values From the Micro Serivce : " + response.toString());
 		return new ConvertionValue(response.getId(), from, to, response.getConversionMultiple(), qa,
 				qa.multiply(response.getConversionMultiple()), response.getPort());
