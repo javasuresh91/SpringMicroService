@@ -1,0 +1,143 @@
+1.What is Microservice :
+-It is REST service with Small deployable unit with cloud environment enabled
+-Big application are divided and run as small services and interlinked with Rest service call within each other
+2.Challenge
+-Bounded Context : Deciding the Boundary(Spliting the business logic and develope the service) for each service
+-- 
+--
+-Configuration management : N no of microserice with N no of instance(QA,Prod,Dev)
+-- Spring Cloud Config Server : 
+-- Hold the configuration for each and every microservice in the Centralized repository lik Git,SVN and etc
+-Dynamic scale up and scale down(Dynamic Load balancing) : Decide what instnace shld serve the request from the mutiple request based on load.
+-- Feign - (Basic Level 1)
+-- Ribbon(Client side load balancing- intermediate level 2)
+-- Naming Server (Eureka- expertise Level 3)
+-Visiblity : If  a Application has N no of the Service and have an bug in anyone service, we need to identify and retify it, so we need the monitoring process.
+-- Zipkin Distributing Tracing
+-- Netflix API Gateway 
+3.Spring Cloud
+- It bring the solution for the problem/Challenge faced by Micro service
+4.Advantage
+- New Tech and process adaption
+- dynamic scaling
+- faster release cycle
+5.Centralized Config management(Spring Cloud Config Server)
+- Each service request the configuration of another service to the CONFIG SERVER
+- Service may be in different environment with different instance.
+6.Configure the Spring Cloud Config Client(Limit_Service Project)
+STEP 1 : Spring Version Shld be greater than 2.0.0(Snapshot version shld avoid) to support the microservice
+STEP 2 : Add Dependency (Web,Config Client,Dev tools,Actuator) and build the maven project as Spring Boot application(Limit_Service)
+STEP 3 : give application name(spring.application.name) in the application.properties file(spring.application.name=limit-service)
+			server.port = 8080(default)
+STEP 4 : Create a COntroller Class as @RestController
+			Create a Get Service retrun the LimitConfiguration Object
+STEP 5 : Create a Pojo class as "LimitConfiguration" with fields(maximum and minimum) with protected constructor and parameterized constructor 
+STEP 6 : Check the Rest Service its working or not by starting the application.
+(Reading Minimum and MAximum value from the Properties file)
+STEP 7 : add the properties to the file like (<application_name>.<property_name>=<value>) eg : limit-service.maximum=9999
+STEP 8 : To read the Pr file, Create a class with Annotation @Component and @ConfigurationProperties(<Properties Prefix Label>) eg : @ConfigurationProperties("limit-service") with variable maximum and minimum to get the values from the key(limit-service.maximum, limit-service.minimum)
+STEP 9 : Autowire the Above class in the controller to access and return value in the GET Rest Service and check the service is working
+7.Centralized Config management(Spring_Cloud_Config_Server)
+STEP 1 : Spring Version Shld be greater than 2.0.0(Snapshot version shld avoid) to support the microservice
+STEP 2 : Add Dependency (Web,Config Server,Dev tools,Actuator) and build the maven project as Spring Boot application(Spring_Cloud_Config_Server)
+STEP 3 : give application name(spring.application.name) in the application.properties file(spring.application.name=spring-cloud-config-server)
+			server.port = 8888(custom)
+STEP 4 : Create a local Git Repo to connect to the Server Config.
+			Add the Git Repo Local path to our Project.
+			create the default file(limit-service.properties) in the repo folder
+			add the properties((limit-service.maximum, limit-service.minimum)) to this file
+			Commit and push the file to the local repo using git cmd then ly it will will avaliable to the project to access it.
+					
+STEP 5 : Add the location of the local git repo to the application.properties as spring.cloud.config.server.git.uri=file://<LOCAL_REPO_PATH_DIR>
+STEP 6 : Launch the Server Config Application and access the url <server_address>:<port_no>/<property file name>/<Environment>. 
+			eg:localhost:8888/limit-service/default
+			Will get the error page. So we need to enable the Spring Cloud in our application by adding the @EnavleConfigServer in the MAin class of the application
+			Now access the link. it will display some values
+(Configuring the Different Environment)			
+STEP 7 : Create the Dev  environment config file(limit-service-dev.properties) and create for production environment config file(limit-service-prod.properties)
+STEP 8 : Commit the above file in the local repo using git CMD
+STEP 9 : access the link localhost:8888/limit-service/qa, localhost:8888/limit-service/prod
+(Connect to the Limit-service to spring config server)
+STEP 10 : Rename the properties file name in the limit-service application as bootstrap.properties
+STEP 11 : Add spring.cloud.config.uri=<SPRING_CLOUD_CONFIG_SERVER_URI>. eg:spring.cloud.config.uri=http://localhost:8888 in bootstrap.properties
+STEP 12 : Remove the existing value (limit-service.maximum, limit-service.minimum) from the bootstrap.properties
+STEP 12 : Start the limit-service application, you can see the log , like the application is ready to fetch the value from the server in the defalut service
+STEP 13 : if we access the limit-service GET url, it will get the  value from the SPRING_CLOUD_CONFIG_SERVER application as default environment. 
+(Configure Profile for Limit-Service)
+STEP 14 : Add spring.profiles.active=<Environment_Name>. eg :spring.profiles.active=qa
+STEP 15 : Start/Restart the limit-service application,if we access the limit-service GET url, it will get the  value from the SPRING_CLOUD_CONFIG_SERVER application as qa environment.
+8. Building Micro service(Example 1 - Currency Exchange Service)
+STEP 1 : Spring Version Shld be greater than 2.0.0(Snapshot version shld avoid) to support the microservice
+STEP 2 : Add Dependency(Web,devtools,Actuator,config-client) and build the maven project as Spring Application(currency_exchange_service)
+STEP 3 : give application name(spring.application.name) in the application.properties file(spring.application.name=currency-exchange-service)
+			server.port = 8000(custom) and start the application and check it is working with port 8000
+STEP 4 : Create the Controller with @RestController
+STEP 5 : Create the GET Service along with path variable("/currency-exchnage/from/{from}/to/{to}") with return type as "ExchangeValue" in the controller. 
+STEP 6 : Create a POJO class "ExchangeValue" with variable(id,from,to,conversionMultiple), with protected constructor and parameterized constructor
+STEP 7 : Return the GET service with hard coded values as "new ExchangeValue(1,USD,INR,65) and start the application.
+STEP 8 : Access the URL localhost:8000/currency-exchnage/from/USD/to/IND.
+(Setting the dynamic server port in the response of the GET Service-"To track the mutiple instance")
+STEP 9 : Add variable(port) to ExchangeValue and set the port number from the Environment(property file,VM argument) in the GET service and return as response temporary
+			To run mutiple instance in eclipse, pass the -Dserver.port=8001 as VM Arguments
+STEP 10: Now the both instnace can start up, it will run in the two different port(different instance) and access the link as localhost:8000/currency-exchnage/from/USD/to/IND and localhost:8001/currency-exchange/from/USD/to/IND, we will receive the response with port number
+(Configure the JPA or hibernate or external/internal database)
+STEP 11: Add two more Dependency(data jpa, h2database) in the pom.xml of currency_exchange_service
+STEP 12: Add @Entity to the POJO class "ExchangeValue" and create data.sql and form the insert script for the conversion multiple values
+STEP 13: Add spring.jpa.show-sql and spring.h2.console.enabled  both in the application.properties and then start the application and check all the basic function works
+STEP 14: Create a interface(Repository) "ExchangeValueRepository" extends JPARepository
+STEP 15: Create a queryMethod(method with two parameter from and to , which we get from the REST GET request ) in the repository and autowire the Repository interface in the controller and access the queryMethod to get the Rows based on the from and to (USD and INR)
+9.Building Micro service(Example 2 - Currency Conversion Service)
+STEP 1 : Spring Version Shld be greater than 2.0.0(Snapshot version shld avoid) to support the microservice
+STEP 2 : Add Dependency(Web,devtools,Actuator,config-client) and build the maven project as Spring Application(currency_conversion_service)
+STEP 3 : give application name(spring.application.name) in the application.properties file(spring.application.name=currency-conversion-service)
+			server.port = 8100(custom) and start the application and check it is working with port 8100
+(Creating a GET Service to talk to the currency_exchange_service to get the conversion multiple value from Database)			
+STEP 4 : Create a controller with @RestController 
+STEP 5 : Create the GET Service along with path variable("/currency-converter/from/{from}/to/{to}/quantity/{quantity}") with return type as "CurrenecyConversionBean" in the controller.
+STEP 6 : Create POJO class "CurrenecyConversionBean" with variables(id,from,to,conversionMultiple,calculatedValue,port), with protected constructor and parameterized constructor 
+STEP 7 : Return the GET service with hard coded values as "new CurrenecyConversionBean(1,USD,INR,65,quantity,quantity,0) and start the application 
+STEP 8 : Access the URL localhost:8000/currency-converter/from/USD/to/IND/quantity/1000 and check the response.
+10. Calling One micro service from another micro service(Calling currency-exchange from currency-converter) 
+(Using REST Template)
+STEP 1 : Add RestTemplate in the GET Service of currency_conversion_service controller
+			Map<String,String> uriVariables = new HashMap<>();
+			uriVariables.put("from",<fromTheRequest>);
+			uriVariables.put("to",<fromTheRequest>);
+			ResponseEntity<CurrenecyConversionBean> response = new RestTemplate().getForEntity("localhost:8000/currency-exchnage/from/{from}/to/{to}",CurrenecyConversionBean.class,uriVariables);
+STEP 2 : From the above response, we can get the CurrenecyConversionBean data = response.getBody();
+STEP 3 : We shld return the variable(data) as response to the User 
+STEP 4 : Access the URL localhost:8000/currency-converter/from/USD/to/IND/quantity/1000 and check the dynamic response, which is called from another micro service and its database.
+11. Calling One micro service from another micro service(Calling currency-exchange from currency-converter)
+(Using Feign from the Spring Cloud Framework, Because using REST Template, we need to hard code many thing to call a another service, Feign will overcome some maunal steps)
+STEP 1 : Add Dependency (feign) in the pom.xml of currency_conversion_service Dependency
+STEP 2 : Add tne @EnableFeignClients(<package-name, which need to scan>) in the main class. 
+STEP 3 : Create interface(CurrencyExchangeProxy) which is called as feign proxy, in the currency_conversion_service application
+			Add @FeignClient(name=<application name of the calling microserice>, url=<host:port_no>) in the above interface. eg: @FeignClient(name=currency-exchange-service, url=localhost:8000)
+			Add a method signature as same as GET service used in the currency-exchange-service application, and change the return type to CurrenecyConversionBean alone, the implementation shld be given in the Controller of the currency_conversion_service
+STEP 4 : Autowire the CurrencyExchangeProxy in the controller of currency_conversion_service
+			CurrenecyConversionBean data = proxyInstance.<methodName>(parameter as we required)
+STEP 5 : We shld return the variable(data) as response to the User 
+STEP 6 : Access the URL localhost:8000/currency-converter/from/USD/to/IND/quantity/1000 and check the dynamic response, which is called from another micro service and its database.
+12. Calling One micro service from another micro service(Calling currency-exchange from currency-converter)
+(Using Ribbon from the Spring Cloud Framework, Because using Feign , load is given to only one instance  Ribbon will overcome this prmb)
+STEP 1 : Add Dependency(Ribbon)in the pom.xml of currency_conversion_service Dependency
+STEP 2 : TO enable the Ribbon , add the @RibbonClient(name=<application name of the calling microserice >) in the above proxy interface. Eg: @RibbonClient(name=currency-exchange-service)
+STEP 3 : Remove the URl attribute from the @FeignClient
+STEP 4 : Add multiple URL with comma seperated in the application.properties of currency_conversion_service as <application_name>.ribbon.listOfServers=<list of Server URL>; Eg  currency-exchange-service.ribbon.listOfServer=http:localhost:8000,localhost:8001
+STEP 5 : Start All the Application in the different instnace and check the request
+13. Calling One micro service from another micro service(Calling currency-exchange from currency-converter via Naming Server)
+(Using Naming Server, Ribbon will do the Load balancing.. But in the above steps, the url configuration is manual and hard coded to overcome Erueka(Naming Server) is used)
+STEP 1 : Spring Version Shld be greater than 2.0.0(Snapshot version shld avoid) to support the microservice
+STEP 2 : Add Dependency(devtools,Actuator,erueka-server,config-client) and build the maven project as Spring Application(netfix_eureka_naming_server)
+STEP 3 : Add @EnableEurekaServer in the main class of the Application to enable the Erueka Server in the application
+STEP 4 : give application name(spring.application.name) in the application.properties file(spring.application.name=netfix-eureka-naming-server)
+			server.port = 8761(custom)
+STEP 5 : To stop the erueka to register the with the naming server, so need to add erueka.client.register-with-erueka=false and erueka.client.fetch-registry=false
+STEP 6 : start the application and check it is working with port 8761. Access it using localhost:8761/ or localhost:8761/erueka
+(Registering the microservice with erueka server)
+STEP 7 : Goto pom.xml of currency_conversion_service application and Add Dependency(eureka Client)
+STEP 8 : Add the @EnableDiscoveryClient in the main Class of currency_conversion_service application, to register the service in the naming server
+STEP 9 : Add eureka.client.service-url.default-zone=<erueka-server-url> in the application.properties of currency_conversion_service eg :eureka.client.service-url.default-zone =  http://localhost:8761/erueka
+STEP 10 : We can do the above configuration in all the microserice discovery 
+
+			
